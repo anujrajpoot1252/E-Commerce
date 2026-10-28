@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopEase - Person 2 Business Logic Live Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>ShopEase: Person 2 Logic (Products + Cart + Orders)</h1>
+      <small>Live Interactive Testing (Connected to Apache)</small>
+    </div>
+    <div class="badge">Status: Online</div>
+  </header>
+
+  <div class="grid">
+    <!-- Left Column: Products & Cart -->
+    <div>
+      <div class="card">
+        <h2>1. Available Products (Live Inventory)</h2>
+        <div class="product-list" id="productsContainer"></div>
+      </div>
+
+      <div class="card">
+        <h2>2. Active Cart</h2>
+        <div id="cartItemsContainer"><p style="color: #6b7280; font-size: 13px;">Cart is empty.</p></div>
+        <div class="cart-total">
+          <span>Total:</span>
+          <span id="cartTotal">0</span>
+        </div>
+        <button class="btn-success" onclick="checkoutOrder()">Place Order (Checkout)</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Orders & Real-time Console Log -->
+    <div>
+      <div class="card">
+        <h2>3. Orders History</h2>
+        <div id="ordersContainer"><p style="color: #6b7280; font-size: 13px;">No orders placed yet.</p></div>
+      </div>
+
+      <div class="card">
+        <h2>4. Live Execution Log (Business Logic Console)</h2>
+        <div class="log-box" id="logBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // In-memory data store
+    const products = [
+      { id: 'p1', name: 'Wireless Headphones', price: 1999, stock: 5 },
+      { id: 'p2', name: 'Smart Fitness Watch', price: 2999, stock: 3 },
+      { id: 'p3', name: 'Casual Cotton T-Shirt', price: 499, stock: 10 },
+      { id: 'p4', name: 'RGB Gaming Mouse', price: 899, stock: 2 }
+    ];
+
+    let cart = [];
+    let orders = [];
+
+    function log(msg) {
+      const box = document.getElementById('logBox');
+      const time = new Date().toLocaleTimeString();
+      box.innerHTML += `<div>[${time}] ${msg}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function renderProducts() {
+      const container = document.getElementById('productsContainer');
+      container.innerHTML = products.map(p => `
+        <div class="product-card">
+          <div>
+            <div class="product-name">${p.name}</div>
+            <div class="product-price">${p.price}</div>
+            <div class="product-stock">Available Stock: <span class="stock-badge">${p.stock}</span></div>
+          </div>
+          <button onclick="addToCart('${p.id}')" ${p.stock <= 0 ? 'disabled style="background:#9ca3af"' : ''}>
+            ${p.stock <= 0 ? 'Out of Stock' : '+ Add to Cart'}
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cartItemsContainer');
+      const totalSpan = document.getElementById('cartTotal');
+
+      if (cart.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280; font-size: 13px;">Cart is empty.</p>';
+        totalSpan.innerText = '0';
+        return;
+      }
+
+      let total = 0;
+      container.innerHTML = cart.map((item, idx) => {
+        const subtotal = item.price * item.quantity;
+        total += subtotal;
+        return `
+          <div class="cart-item">
+            <div>
+              <strong>${item.name}</strong><br>
+              <small>${item.price} ${item.quantity} = ${subtotal}</small>
+            </div>
+            <div>
+              <button class="btn-danger" style="padding: 2px 8px;" onclick="removeFromCart(${idx})"></button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      totalSpan.innerText = '₹' + total;
+    }
+
+    function renderOrders() {
+      const container = document.getElementById('ordersContainer');
+      if (orders.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280; font-size: 13px;">No orders placed yet.</p>';
+        return;
+      }
+
+      container.innerHTML = orders.map(o => `
+        <div class="order-card">
+          <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+            <strong>${o.orderId}</strong>
+            <span style="color: ${o.status === 'Cancelled' ? '#dc2626' : '#16a34a'}; font-weight: 600;">${o.status}</span>
+          </div>
+          <div>Total: ₹${o.totalAmount} (${o.items.length} items)</div>
+          <small style="color:#6b7280">Time: ${o.createdAt}</small>
+          ${o.status === 'Placed' ? `
+            <div style="margin-top: 8px;">
+              <button class="btn-danger" style="font-size: 11px; padding: 4px 8px;" onclick="cancelOrder('${o.orderId}')">
+                Cancel Order & Restore Stock
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    // 1. ADD TO CART
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      const existing = cart.find(item => item.productId === productId);
+      const currentInCart = existing ? existing.quantity : 0;
+
+      if (currentInCart + 1 > product.stock) {
+        log(`Stock Limit Exceeded! Available: ${product.stock}, in cart: ${currentInCart}`);
+        alert(`Cannot add more! Only ${product.stock} items in stock.`);
+        return;
+      }
+
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1
+        });
+      }
+
+      log(` Added "${product.name}" to Cart. Total Cart Items: ${cart.length}`);
+      renderCart();
+    }
+
+    // 2. REMOVE FROM CART
+    function removeFromCart(index) {
+      const removed = cart.splice(index, 1)[0];
+      log(`Removed "${removed.name}" from Cart.`);
+      renderCart();
+    }
+
+    // 3. CHECKOUT / CREATE ORDER
+    function checkoutOrder() {
+      if (cart.length === 0) {
+        alert('Cart is empty!');
+        return;
+      }
+
+      // Check stock
+      for (const item of cart) {
+        const product = products.find(p => p.id === item.productId);
+        if (product.stock < item.quantity) {
+          alert(`Not enough stock for ${item.name}!`);
+          return;
+        }
+      }
+
+      const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const orderId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+
+      const order = {
+        orderId,
+        items: JSON.parse(JSON.stringify(cart)),
+        totalAmount: total,
+        status: 'Placed',
+        createdAt: new Date().toLocaleTimeString()
+      };
+
+      // Deduct stock
+      for (const item of cart) {
+        const product = products.find(p => p.id === item.productId);
+        product.stock -= item.quantity;
+        log(`Stock Deducted: "${product.name}" remaining stock = ${product.stock}`);
+      }
+
+      orders.unshift(order);
+      cart = []; // Clear Cart
+      log(`Order "${orderId}" Placed Successfully for ₹${total}! Cart Auto-cleared.`);
+
+      renderProducts();
+      renderCart();
+      renderOrders();
+    }
+
+    // 4. CANCEL ORDER
+    function cancelOrder(orderId) {
+      const order = orders.find(o => o.orderId === orderId);
+      if (!order || order.status === 'Cancelled') return;
+
+      order.status = 'Cancelled';
+
+      // Restore stock
+      for (const item of order.items) {
+        const product = products.find(p => p.id === item.productId);
+        if (product) {
+          product.stock += item.quantity;
+          log(` Stock Restored: "${product.name}" stock restored to = ${product.stock}`);
+        }
+      }
+
+      log(` Order "${orderId}" Cancelled. All items restocked.`);
+      renderProducts();
+      renderOrders();
+    }
+
+    // Initial load
+    renderProducts();
+    renderCart();
+    renderOrders();
+    log(' ShopEase Business Logic Engine Initialized.');
+  </script>
+</body>
+</html>
