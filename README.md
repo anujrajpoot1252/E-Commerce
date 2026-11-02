@@ -40,7 +40,6 @@ E-Commerce/
 │   └── schema.sql
 ├── frontend/
 ├── php/
-├── .agents/skills/unslop/
 └── README.md
 ```
 
@@ -59,7 +58,6 @@ E-Commerce/
   - Orders: `/api/orders`
 - Configured CORS and centralized error handling middleware.
 - Resolved model naming consistency (`User.js`).
-- Installed `unslop` design skill for UI redline reviews and clean design standards.
 
 ### Next Milestone
 - Seed sample catalog data in MongoDB (`seed.js`).
