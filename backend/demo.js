@@ -1,9 +1,8 @@
 /**
- * E-Commerce Person 2 Logic Live Demo
+ * ShopEase Business Logic Simulation
  * Products -> Cart -> Orders -> Stock Management
  */
 
-// 1. In-Memory Database (Products)
 const database = {
   products: [
     { id: 'p1', name: 'Wireless Headphones', price: 1999, category: 'Electronics', stock: 10 },
@@ -19,7 +18,6 @@ const database = {
   orders: []
 };
 
-// Helper: Calculate total
 function updateCartTotal() {
   database.cart.totalPrice = database.cart.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -27,10 +25,8 @@ function updateCartTotal() {
   );
 }
 
-
-// 1. PRODUCT LOGIC: Search products
 function searchProducts(keyword) {
-  console.log(`\n [STEP 1] Searching products with keyword: "${keyword}"...`);
+  console.log(`\n[Search] Keyword: "${keyword}"`);
   const results = database.products.filter((p) =>
     p.name.toLowerCase().includes(keyword.toLowerCase())
   );
@@ -38,28 +34,25 @@ function searchProducts(keyword) {
   return results;
 }
 
-// 2. CART LOGIC: Add to Cart with Stock Verification
 function addToCart(productId, quantity) {
-  console.log(`\n[STEP 2] Adding to cart: Product ID "${productId}", Quantity: ${quantity}...`);
+  console.log(`\n[Cart] Adding Product ID "${productId}", Quantity: ${quantity}`);
   const product = database.products.find((p) => p.id === productId);
 
   if (!product) {
-    console.log(` Error: Product not found!`);
+    console.log(`[Cart] Error: Product not found.`);
     return false;
   }
 
-  // Stock check
   if (product.stock < quantity) {
-    console.log(` Error: Out of stock! Available stock is only ${product.stock}.`);
+    console.log(`[Cart] Error: Insufficient stock. Available: ${product.stock}.`);
     return false;
   }
 
-  // Check if already in cart
   const existingItem = database.cart.items.find((item) => item.productId === productId);
 
   if (existingItem) {
     if (existingItem.quantity + quantity > product.stock) {
-      console.log(`Error: Cannot add more! Available stock is ${product.stock}, already in cart: ${existingItem.quantity}.`);
+      console.log(`[Cart] Error: Requested quantity exceeds available stock (${product.stock}). In cart: ${existingItem.quantity}.`);
       return false;
     }
     existingItem.quantity += quantity;
@@ -73,31 +66,27 @@ function addToCart(productId, quantity) {
   }
 
   updateCartTotal();
-  console.log(`Success: Added "${product.name}" to cart.`);
-  console.log(`Current Cart Total: ${database.cart.totalPrice}`);
+  console.log(`[Cart] Added "${product.name}". Cart Total: ₹${database.cart.totalPrice}`);
   console.table(database.cart.items);
   return true;
 }
 
-// 3. ORDER LOGIC: Checkout & Place Order
 function createOrder(shippingAddress) {
-  console.log(`\n [STEP 3] Placing Order (Checkout)...`);
+  console.log(`\n[Order] Initiating Checkout...`);
 
   if (database.cart.items.length === 0) {
-    console.log(` Error: Cannot checkout an empty cart!`);
+    console.log(`[Order] Error: Cart is empty.`);
     return null;
   }
 
-  // Final Live Stock Check
   for (const item of database.cart.items) {
     const liveProduct = database.products.find((p) => p.id === item.productId);
     if (!liveProduct || liveProduct.stock < item.quantity) {
-      console.log(` Error: Insufficient stock for ${item.name}!`);
+      console.log(`[Order] Error: Insufficient stock for ${item.name}.`);
       return null;
     }
   }
 
-  // Create Order Object
   const orderId = `ORD-${Date.now().toString().slice(-4)}`;
   const order = {
     orderId,
@@ -106,98 +95,83 @@ function createOrder(shippingAddress) {
     totalAmount: database.cart.totalPrice,
     shippingAddress,
     status: 'Placed',
-    createdAt: new Date().toLocaleTimeString()
+    createdAt: new Date().toLocaleTimeString('en-US', { hour12: false })
   };
 
   database.orders.push(order);
 
-  // DEDUCT INVENTORY STOCK
   for (const item of order.items) {
     const liveProduct = database.products.find((p) => p.id === item.productId);
     liveProduct.stock -= item.quantity;
-    console.log(`📉 Stock Updated: "${liveProduct.name}" remaining stock = ${liveProduct.stock}`);
+    console.log(`[Inventory] Stock updated for "${liveProduct.name}". Remaining: ${liveProduct.stock}`);
   }
 
-  // CLEAR CART AFTER ORDER
   database.cart.items = [];
   database.cart.totalPrice = 0;
-  console.log(`🧹 Cart auto-cleared after successful order.`);
-
-  console.log(`\n🎉 Order Created Successfully!`);
+  console.log(`[Cart] Cart cleared after successful order.`);
+  console.log(`[Order] Order ${orderId} created successfully:`);
   console.log(JSON.stringify(order, null, 2));
   return order;
 }
 
-// 4. ORDER LOGIC: Cancel Order & Restore Stock
 function cancelOrder(orderId) {
-  console.log(`\n❌ [STEP 4] Cancelling Order: "${orderId}"...`);
+  console.log(`\n[Order] Cancelling Order: "${orderId}"`);
   const order = database.orders.find((o) => o.orderId === orderId);
 
   if (!order) {
-    console.log(`❌ Error: Order not found!`);
+    console.log(`[Order] Error: Order not found.`);
     return false;
   }
 
   if (order.status === 'Cancelled') {
-    console.log(`⚠️ Warning: Order is already cancelled!`);
+    console.log(`[Order] Notice: Order is already cancelled.`);
     return false;
   }
 
   order.status = 'Cancelled';
 
-  // RESTORE STOCK BACK TO INVENTORY
   for (const item of order.items) {
     const liveProduct = database.products.find((p) => p.id === item.productId);
     if (liveProduct) {
       liveProduct.stock += item.quantity;
-      console.log(`📈 Stock Restored: "${liveProduct.name}" stock restored to = ${liveProduct.stock}`);
+      console.log(`[Inventory] Stock restored for "${liveProduct.name}". Current stock: ${liveProduct.stock}`);
     }
   }
 
-  console.log(`✅ Order status updated to "${order.status}".`);
+  console.log(`[Order] Status updated to "${order.status}".`);
   return true;
 }
 
-// ==========================================
-// RUNNING THE COMPLETE FLOW LIVE
-// ==========================================
-console.log('====================================================');
-console.log('   🚀 SHOP-EASE: PERSON 2 BUSINESS LOGIC DEMO');
-console.log('====================================================');
+// Execution flow
+console.log('----------------------------------------------------');
+console.log('ShopEase Business Logic Simulation');
+console.log('----------------------------------------------------');
 
-// 1. Initial Products
-console.log('\n--- INITIAL PRODUCTS IN STORE ---');
+console.log('\nInitial Products:');
 console.table(database.products);
 
-// 2. Search
 searchProducts('watch');
+addToCart('p1', 2);
+addToCart('p2', 1);
 
-// 3. Add to cart
-addToCart('p1', 2); // 2 Headphones
-addToCart('p2', 1); // 1 Watch
-
-// 4. Test Stock Validation (Fail scenario)
-console.log('\n⚠️ [TESTING VALIDATION] Trying to add 5 Gaming Mice (only 2 in stock)...');
+console.log('\nValidation Check (Adding 5 Gaming Mice when 2 are in stock):');
 addToCart('p4', 5);
 
-// 5. Checkout
 const myOrder = createOrder({
   address: '42 Nehru Nagar',
   city: 'Jaipur',
   phone: '9876543210'
 });
 
-// 6. View Products Stock after checkout
-console.log('\n--- PRODUCTS STOCK AFTER ORDER ---');
+console.log('\nInventory Status After Checkout:');
 console.table(database.products);
 
-// 7. Cancel Order and verify stock restoration
 if (myOrder) {
   cancelOrder(myOrder.orderId);
-  console.log('\n--- PRODUCTS STOCK AFTER CANCELLATION (RESTORED) ---');
+  console.log('\nInventory Status After Cancellation:');
   console.table(database.products);
 }
 
-console.log('\n====================================================');
-console.log('   ✅ DEMO FINISHED SUCCESSFULLY!');
-console.log('====================================================');
+console.log('\n----------------------------------------------------');
+console.log('Simulation complete.');
+console.log('----------------------------------------------------');

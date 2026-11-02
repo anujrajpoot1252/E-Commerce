@@ -23,7 +23,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.json({
     status: "success",
-    message: "ShopEase Backend REST API is running successfully!",
+    message: "ShopEase REST API operational.",
     endpoints: {
       auth: "/api/auth",
       products: "/api/products",
