@@ -1,49 +1,29 @@
-# 🛍️ ShopEase - Modern Full-Stack E-Commerce Website
+# ShopEase
 
-ShopEase is a full-featured e-commerce platform built using modern web architecture:
-**Frontend (HTML5/CSS3/JavaScript) + PHP Session Layer + Node.js/Express REST API + MongoDB**.
+A full-stack e-commerce web application with PHP session services, a Node.js REST API, and MongoDB persistence.
 
 ---
 
-## 📌 Project Architecture
+## Architecture
 
-```
+```text
 [ User Browser ]
-       │  (HTTPS Requests)
-       ▼
-[ Frontend: HTML5 + CSS3 + Vanilla JS ]
-       │
-       ├───► [ PHP Services: Sessions, Server-rendered pages & Forms ]
-       │            │ (API Requests via cURL)
-       │            ▼
-       └───► [ Node.js + Express: REST API & Business Logic ]
-                    │ (Mongoose ODM)
-                    ▼
+       |  (HTTP Requests)
+       v
+[ Frontend: HTML5, CSS3, JavaScript ]
+       |
+       +---> [ PHP Services: Sessions, Server-rendered pages, Form processing ]
+       |            | (API calls via cURL)
+       |            v
+       +---> [ Node.js & Express: REST API & Business Logic ]
+                    | (Mongoose ODM)
+                    v
              [ MongoDB Database ]
 ```
 
 ---
 
-## 🚀 Today's Progress (Day 1 & Day 2 Completed)
-
-### ✅ Day 1: Environment & Dependency Setup
-- Added `bcryptjs` to `backend/package.json` for password hashing and authentication.
-- Created `backend/.env` configuration template with PORT, MongoDB URIs, and JWT Secrets.
-- Updated `backend/config/db.js` with dynamic fallback support for database connection strings.
-
-### ✅ Day 2: Server Routing & Architecture Wiring
-- Mounted all core business logic REST routes into `backend/server.js`:
-  - `POST /api/auth/signup` & `POST /api/auth/login` (Authentication)
-  - `GET /api/products` & `GET /api/products/:id` (Product Catalog)
-  - `GET /api/cart`, `POST /api/cart/add`, `DELETE /api/cart/remove/:id` (Shopping Cart)
-  - `POST /api/orders/create`, `GET /api/orders/my-orders` (Order Management & Stock Deduction)
-- Integrated `cors` middleware to allow cross-origin requests from Frontend and PHP.
-- Connected Centralized Error Handler middleware (`errorHandler.js`).
-- Resolved model casing inconsistencies (`User.js`).
-
----
-
-## 📂 Project Folder Structure
+## Project Structure
 
 ```text
 E-Commerce/
@@ -58,13 +38,37 @@ E-Commerce/
 ├── database/
 │   ├── mongo_schema.js
 │   └── schema.sql
-├── frontend/ (In Progress - Multi-page UI)
-├── php/ (Scheduled - Session & Authentication Bridge)
+├── frontend/
+├── php/
+├── .agents/skills/unslop/
 └── README.md
 ```
 
 ---
 
-## 🎯 Next Step (Day 3)
-- Connect MongoDB (Local/Atlas) and run sample data seeder (`seed.js`).
-- Test all REST API endpoints end-to-end.
+## Progress
+
+### Phase 1: Environment and Core Wiring
+- Added `bcryptjs` dependency for credential hashing.
+- Configured environment variables template (`.env`).
+- Added database connection fallback handling in `db.js`.
+- Wired REST endpoints into Express `server.js`:
+  - Authentication: `/api/auth`
+  - Products: `/api/products`
+  - Cart: `/api/cart`
+  - Orders: `/api/orders`
+- Configured CORS and centralized error handling middleware.
+- Resolved model naming consistency (`User.js`).
+- Installed `unslop` design skill for UI redline reviews and clean design standards.
+
+### Next Milestone
+- Seed sample catalog data in MongoDB (`seed.js`).
+- Verify API endpoints end-to-end.
+- Implement PHP session and authentication bridge.
+
+---
+
+## Local Development
+
+- **Frontend Demo Server:** Run `php -S localhost:8000` to view the interactive test interface.
+- **Backend API:** Run `node backend/server.js` (starts on port 5000 once Node.js is installed).
