@@ -40,6 +40,14 @@ E-Commerce/
 │   └── schema.sql
 ├── frontend/
 ├── php/
+│   ├── config/ (config.php)
+│   ├── handlers/ (login_process.php, create_process.php)
+│   ├── includes/ (api_helper.php, session.php)
+│   ├── account.php
+│   ├── create-account.php
+│   ├── index.php
+│   ├── login.php
+│   └── logout.php
 └── README.md
 ```
 
@@ -59,10 +67,20 @@ E-Commerce/
 - Configured CORS and centralized error handling middleware.
 - Resolved model naming consistency (`User.js`).
 
+### Phase 2: PHP Services and Session Layer (Completed)
+- Built `php/includes/api_helper.php` for cURL REST API communication with the Node.js backend.
+- Implemented `php/includes/session.php` with authentication state helpers (`is_logged_in`, `require_login`, `require_admin`).
+- Created authentication form handlers: `login_process.php` and `create_process.php`.
+- Created server-rendered user interface pages:
+  - `php/index.php`: Services portal and session status monitor.
+  - `php/login.php`: Clean sign-in form with flash messages.
+  - `php/create-account.php`: Account creation form.
+  - `php/account.php`: Protected user profile and token session inspector.
+  - `php/logout.php`: Safe session termination.
+
 ### Next Milestone
 - Seed sample catalog data in MongoDB (`seed.js`).
 - Verify API endpoints end-to-end.
-- Implement PHP session and authentication bridge.
 
 ---
 
